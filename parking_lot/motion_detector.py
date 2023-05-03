@@ -51,19 +51,18 @@ def plot_boxes(results, frame):
             row = cord[i]
             if row[4] >= 0.2:
                 x1, y1, x2, y2 = int(row[0]*x_shape), int(row[1]*y_shape), int(row[2]*x_shape), int(row[3]*y_shape)
-                bot_center = (int((x1 + x2) / 2), int((y1 + y2) / 2 + (y2 - y1) / 4))
+                centroid = (int((x1 + x2) / 2), int((y1 + y2) / 2 + (y2 - y1) / 4))
                 bgr = (0, 255, 0)
-                # cv2.rectangle(frame, (x1, y1), (x2, y2), bgr, 1)
-                cv2.rectangle(frame, bot_center, (bot_center[0] + 1, bot_center[1] + 1), (0, 255, 0), 1)
-                # cv2.putText(frame, model.names[int(labels[i])], (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.5, bgr, 1)
+                cv2.rectangle(frame, centroid, (centroid[0] + 1, centroid[1] + 1), (0, 255, 0), 1)
+                cv2.putText(frame, model.names[int(labels[i])], (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.5, bgr, 1)
 
-        return frame
+        return frame, centroid
     
 cv2.destroyAllWindows()
 
 class MotionDetector:
     LAPLACIAN = 1.4
-    DETECT_DELAY = 4
+    DETECT_DELAY = 1
 
     def __init__(self, video, coordinates, start_frame):
         self.video = video
@@ -121,7 +120,7 @@ class MotionDetector:
                 if count % 4 == 0:
                     results = score_frame(frame) # Score the Frame
                     labels, cord = results
-                frame = plot_boxes(results, frame) # Plot the boxes.
+                frame, centroid = plot_boxes(results, frame)
 
                 # cv2.imshow('Video', frame)
 
@@ -144,37 +143,38 @@ class MotionDetector:
             position_in_seconds = capture.get(open_cv.CAP_PROP_POS_MSEC) / 1000.0
 
             for index, c in enumerate(coordinates_data):
-                status = self.__apply(frame, labels, cord, coordinates_data)
+                status = self.__apply(frame, labels, cord, coordinates_data, centroid)
 
                 # When there has been no change in the parking spot status for a given amount of time
-                if times[index] is not None and self.same_status(statuses, index, status):
-                    print("No changes")
-                    times[index] = None
-                    continue
+                # if times[index] is not None and self.same_status(statuses, index, status):
+                #     print("No changes")
+                #     times[index] = None
+                #     continue
 
                 # Where there is a change and the change is inside the time delay
-                if times[index] is not None and self.status_changed(statuses, index, status):
-                    if position_in_seconds - times[index] >= MotionDetector.DETECT_DELAY:
-                        print("There is a change with the time constraint")
-                        statuses[index] = status
-                        times[index] = None
-                    continue
+                # if times[index] is not None and self.status_changed(statuses, index, status):
+                #     if position_in_seconds - times[index] >= MotionDetector.DETECT_DELAY:
+                #         print("There is a change with the time constraint")
+                #         statuses[index] = status
+                #         times[index] = None
+                #     continue
                 
                  # Where there is a change and the change is inside the time delay
                 if times[index] is None and self.status_changed(statuses, index, status):
                     print("There is a change without the time constraint")
                     times[index] = position_in_seconds
                     statuses[index] = status
+                    continue
 
             for i, s in enumerate(statuses):
                 # print("statuses[index]:   ", s)
-                s[0] = False
-                s[1] = True
-                s[2] = False
-                s[3] = True
+                # s[0] = False
+                # s[1] = True
+                # s[2] = False
+                # s[3] = True
                 for index, p in enumerate(coordinates_data):
                     coordinates = self._coordinates(p)
-                    # print('coordinates   ', coordinates)
+                    # print('coordinates ', coordinates)
                     if s[index]:
                         color = COLOR_BLUE
                         # print(f"Changed color to BLUE for coordinate {index} in status {s[index]}")
@@ -186,7 +186,6 @@ class MotionDetector:
                     
                 open_cv.imshow(str(self.video), new_frame)
 
-
             k = open_cv.waitKey(1)
             if k == ord("q"):
                 break
@@ -194,36 +193,22 @@ class MotionDetector:
         open_cv.destroyAllWindows()
 
 
-    def __apply(self, frame, labels, cord, coordinates_data):
+    def __apply(self, frame, labels, cord, coordinates_data, centroid):
         # Initialize list of centroid coordinates of car instances inside the ROI
         centroids = []
 
         # Initialize list of parking space status
         status = [False] * len(coordinates_data)
-
+        # print("Starting Status: ", status)
         for i in range(len(labels)):
             if len(cord[i]) == 5:
-                # print('len(cord[i]) == 5 ')
-                # x1, y1, x2, y2, confidence = cord[i]
-                # centroid = (int((x1 + x2) / 2), int((y1 + y2) / 2 + (y2 - y1) / 4))
-
-                n = len(labels)
-                x_shape, y_shape = frame.shape[1], frame.shape[0]
-                for i in range(n):
-                    row = cord[i]
-                    if row[4] >= 0.2:
-                        x1, y1, x2, y2 = int(row[0]*x_shape), int(row[1]*y_shape), int(row[2]*x_shape), int(row[3]*y_shape)
-                        centroid = (int((x1 + x2) / 2), int((y1 + y2) / 2 + (y2 - y1) / 4))
-                        bgr = (0, 255, 0)
-                        cv2.rectangle(frame, centroid, (centroid[0] + 1, centroid[1] + 1), (0, 255, 0), 1)
-                        cv2.putText(frame, model.names[int(labels[i])], (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.5, bgr, 1)
 
                 # Check if the centroid coordinates of the bounding box are inside any of the ROIs
-                assigned_parking_space = False
                 for j, (roi, s) in enumerate(zip(self.mask, status)):
-                    if s or assigned_parking_space:
-                        print('Continue ')
-                        continue
+                    # if s[j] == True:
+                    #     print('Occupied at index', j)
+                    #     print("Current status ", status)
+                    #     continue
 
                     y_idx = int(centroid[1] - self.bounds[j][1])
                     x_idx = int(centroid[0] - self.bounds[j][0])
@@ -234,12 +219,18 @@ class MotionDetector:
                     if roi[y_idx, x_idx] == 1:
                         centroids.append((j, centroid))
                         status[j] = True
-                        assigned_parking_space = True
-                        print('Append ')
+                        # print('Centroid inside at index ', j)
+                        # print("Current status ", status)
+                    else:
+                        status[j] = False
+                        # print('Centroid not inside at index', j)
+                        # print("Current status ", status)
 
-                if assigned_parking_space:
-                    print('Break ')
-                    break
+                    # if s[j] == True:
+                    #     print('Occupied at index ', j)
+                    #     print("Current status ", status)
+                    print("Value of s[j]", s)
+
             else:
                 print('Cord length is not 5')
             

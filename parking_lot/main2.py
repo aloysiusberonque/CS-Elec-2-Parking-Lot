@@ -1,10 +1,7 @@
 import cv2
 import torch
-import os
-import numpy as np
 
-model = torch.hub.load('ultralytics/yolov5','yolov5n', pretrained=True)
-# model = torch.hub.load('ultralytics/yolov5', 'custom', path='best.pt')
+model = torch.hub.load('ultralytics/yolov5', 'custom', path='best.pt')
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 model.to(device)
 print(model.names)
@@ -58,7 +55,7 @@ while (video.isOpened()):
 
     if ret == True:
         if count % 4 == 0:
-            results = score_frame(frame) # Score the Frame
+            results = score_frame(frame)
         frame = plot_boxes(results, frame) # Plot the boxes.
 
         cv2.imshow('Video', frame)
