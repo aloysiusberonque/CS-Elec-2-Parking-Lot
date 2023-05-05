@@ -58,8 +58,10 @@ def parse_args():
 if __name__ == '__main__':
     main()
 
-# python main.py --image images/parking_lot_1.png --data data/coordinates_1.yml --video videos/parking_lot_1.mp4 --start-frame 400
+# To Draw
+# python main.py --image images/parking_lot_1.png --data data/coordinates_3.yml --video videos/parking_lot_1.mp4 --start-frame 1
 
-# python main.py --data data/coordinates_1.yml --video videos/parking_lot_1.mp4 --start-frame 400
+# To Run
+# python main.py --data data/coordinates_1.yml --video videos/parking_lot_1.mp4 --start-frame 1
 
 
