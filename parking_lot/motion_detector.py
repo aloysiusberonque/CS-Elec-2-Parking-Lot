@@ -144,6 +144,7 @@ class MotionDetector:
 
             for index, c in enumerate(coordinates_data):
                 status = self.__apply(frame, labels, cord, coordinates_data, centroid)
+                statuses[index] = status
 
                 # When there has been no change in the parking spot status for a given amount of time
                 # if times[index] is not None and self.same_status(statuses, index, status):
@@ -160,11 +161,11 @@ class MotionDetector:
                 #     continue
                 
                  # Where there is a change and the change is inside the time delay
-                if times[index] is None and self.status_changed(statuses, index, status):
-                    print("There is a change without the time constraint")
-                    times[index] = position_in_seconds
-                    statuses[index] = status
-                    continue
+                # if times[index] is None and self.status_changed(statuses, index, status):
+                #     print("There is a change without the time constraint")
+                #     times[index] = position_in_seconds
+                #     statuses[index] = status
+                #     continue
 
             for i, s in enumerate(statuses):
                 # print("statuses[index]:   ", s)
