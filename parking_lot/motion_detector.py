@@ -8,8 +8,6 @@ import cv2
 import torch
 import numpy as np
 
-
-
 # model = torch.hub.load('ultralytics/yolov5','yolov5n', pretrained=True)
 model = torch.hub.load('ultralytics/yolov5', 'custom', path='best.pt')
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -50,7 +48,7 @@ def plot_boxes(results, frame):
             row = cord[i]
             if row[4] >= 0.2:
                 x1, y1, x2, y2 = int(row[0]*x_shape), int(row[1]*y_shape), int(row[2]*x_shape), int(row[3]*y_shape)
-                centroid = (int((x1 + x2) / 2), int((y1 + y2) / 2 + (y2 - y1) / 4) + 5)
+                centroid = (int((x1 + x2) / 2), int((y1 + y2) / 2 + ((y2 - y1) / 8)*3))
                 centroids.append(centroid)
                 bgr = (0, 255, 0)
                 cv2.rectangle(frame, centroid, (centroid[0] + 1, centroid[1] + 1), (0, 255, 0), 1)
